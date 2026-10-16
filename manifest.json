@@ -1,0 +1,64 @@
+{
+  "plugins": [
+    {
+      "id": "bilibili-hot",
+      "name": "B站热门",
+      "version": "1.0.0",
+      "author": "lingshu",
+      "description": "B站热门视频列表与详情",
+      "file": "bilibili-hot.plugin.js",
+      "sourceUrl": "https://www.bilibili.com/v/popular",
+      "categories": [
+        "video",
+        "hot"
+      ],
+      "lang": "zh",
+      "nsfw": 0,
+      "capabilities": [
+        "list",
+        "detail"
+      ],
+      "minRuntimeVersion": "1.0.0"
+    },
+    {
+      "id": "github-trending",
+      "name": "GitHub 趋势",
+      "version": "1.0.1",
+      "author": "lingshu",
+      "description": "GitHub 趋势仓库",
+      "file": "github-trending.plugin.js",
+      "sourceUrl": "https://github.com/trending",
+      "categories": [
+        "code",
+        "trending"
+      ],
+      "lang": "zh",
+      "nsfw": 0,
+      "capabilities": [
+        "list",
+        "detail"
+      ],
+      "minRuntimeVersion": "1.0.0"
+    },
+    {
+      "id": "zhihu-daily",
+      "name": "知乎日报",
+      "version": "1.0.1",
+      "author": "lingshu",
+      "description": "知乎日报每日精选",
+      "file": "zhihu-daily.plugin.js",
+      "sourceUrl": "https://daily.zhihu.com",
+      "categories": [
+        "news",
+        "daily"
+      ],
+      "lang": "zh",
+      "nsfw": 0,
+      "capabilities": [
+        "list",
+        "detail"
+      ],
+      "minRuntimeVersion": "1.0.0"
+    }
+  ]
+}

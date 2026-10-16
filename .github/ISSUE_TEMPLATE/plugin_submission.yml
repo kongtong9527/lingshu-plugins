@@ -1,0 +1,130 @@
+name: Plugin submission
+description: Propose a new example plugin for this curated repository. Read CONTENT-POLICY.md before filling this in.
+title: "[plugin] "
+labels: ["plugin-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository is **curated**: it carries three example plugins, and adding more is a maintainer
+        decision made against [CONTENT-POLICY.md](https://github.com/kongtong9527/lingshu-plugins/blob/main/CONTENT-POLICY.md).
+
+        **Read the policy first.** In one line: public, anonymously reachable sites that need no account and
+        no membership, with **no circumvention of any technical measure**. Adult content sites, pirate
+        content sites and paywall/DRM/member-only circumvention are out of scope — submissions outside that
+        boundary are closed without discussion, and the boundary does not change with the packaging
+        (a "personal use" wording, a documentation-only version or a link instead of code are all refused).
+
+        **Do not paste** the name, domain, screenshot or example data of a source that the policy excludes.
+        This issue tracker must not become an index of those sources. Use `https://example.com` for examples.
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary (all required)
+      description: Every box must be ticked. If any one is not true for your source, do not submit it.
+      options:
+        - label: The source is reachable **anonymously** — no login, no invite code, no account, and the content is available without cookies.
+          required: true
+        - label: The plugin does **not** circumvent any technical measure — no membership/paywall bypass, no DRM circumvention, no leaked site secret, no forged subscription state, no anti-bot evasion service.
+          required: true
+        - label: The source is **not** an adult/sexual content site, and the plugin's content is not adult content (`nsfw` stays `0`).
+          required: true
+        - label: The source is **not** a pirate/unauthorised aggregator of copyrighted works (comics, film/TV, books, music).
+          required: true
+        - label: The submission contains **no credentials** — no account, token, cookie, site secret, signing key or personal data, anywhere.
+          required: true
+        - label: I understand the decision is the maintainers', that a refusal needs no explanation beyond CONTENT-POLICY.md, and that I will not resubmit a variant of a refused submission.
+          required: true
+  - type: input
+    id: plugin-id
+    attributes:
+      label: Plugin id
+      description: Lower-case identifier. The file must be `<id>.plugin.js` and the manifest entry must use the same id.
+      placeholder: "example-plugin"
+    validations:
+      required: true
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Display name
+      placeholder: "Example plugin"
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: The public page the plugin reads. Use `https://example.com` only if you must hide the real host in the issue — but then say so, because a maintainer will need it to review the submission privately.
+      placeholder: "https://example.com/trending"
+    validations:
+      required: true
+  - type: textarea
+    id: anonymous-evidence
+    attributes:
+      label: How you checked anonymous access
+      description: |
+        One or two lines: e.g. "anonymous request (no cookies, no auth header) to the list page returns the
+        items; no login wall, no paywall". Do not paste response bodies or personal data.
+    validations:
+      required: true
+  - type: dropdown
+    id: capabilities
+    attributes:
+      label: Capabilities implemented
+      description: Tick every action the plugin really implements. Declaring an action that is only a stub is a rejection reason.
+      multiple: true
+      options:
+        - list
+        - detail
+        - reading
+        - categories
+        - listings
+        - explore
+        - tags
+        - search
+        - play
+        - settings
+        - account
+    validations:
+      required: true
+  - type: input
+    id: fixture
+    attributes:
+      label: Offline fixture path
+      description: Path of the minimal snapshot you added, e.g. `_fixtures/<id>/list.html`.
+      placeholder: "_fixtures/example-plugin/list.html"
+    validations:
+      required: true
+  - type: textarea
+    id: teaching-value
+    attributes:
+      label: Why this source is worth having as an example
+      description: What does it teach that the three existing plugins do not (pagination shape, JSON channel, card DSL, listing tree, …)? "It works" is not a reason.
+    validations:
+      required: true
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Submission hygiene (all required)
+      options:
+        - label: The plugin is a single self-contained `<id>.plugin.js` — no `require`/`import` of external modules, external access only through the host's `$lib`.
+          required: true
+        - label: The `// ==Plugin==` header is complete and its `description` matches the `manifest.json` entry verbatim; `module.exports` exports `id`, `name` and `version`.
+          required: true
+        - label: >-
+            The `manifest.json` entry uses `file` = `<id>.plugin.js` (the file exists at the repository root)
+            and sets `nsfw` to 0.
+          required: true
+        - label: The fixture is a minimal, hand-trimmed snapshot (not a page/site mirror) and contains no personal data.
+          required: true
+        - label: I wrote the plugin myself, or I have the right to submit it, and I license it under this repository's MIT license.
+          required: true
+        - label: I will sign my commits off (`git commit -s`, DCO) and I understand this repository is a snapshot — accepted work has to be carried upstream to survive a release.
+          required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional. Keep it content-neutral.
+    validations:
+      required: false

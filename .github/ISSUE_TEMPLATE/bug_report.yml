@@ -1,0 +1,94 @@
+name: Bug report
+description: Report a defect in one of the plugins published here, in its manifest entry, or in its offline fixture.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Please keep the report **neutral about content**: describe the source generically ("the source",
+        "the plugin") and do not paste site names, domains, real URLs, page text, credentials or personal
+        data. If a page structure changed, a **minimal synthetic snippet** that reproduces the parsing
+        failure is far more useful than the real page.
+
+        Requests to add sources that CONTENT-POLICY.md excludes are not bugs — they are closed without
+        discussion (see the issue chooser). Security issues must **not** be filed here: see
+        [SECURITY.md](https://github.com/kongtong9527/lingshu-plugins/blob/main/SECURITY.md).
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I read the README, CONTRIBUTING.md and CONTENT-POLICY.md.
+          required: true
+        - label: This is a defect in a plugin published here (or in its manifest entry / fixture), not a complaint about what a source site does.
+          required: true
+        - label: I have not pasted a site name or domain outside CONTENT-POLICY.md's boundary, real page content, credentials or personal data.
+          required: true
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Plugin
+      options:
+        - bilibili-hot
+        - zhihu-daily
+        - github-trending
+        - manifest.json (the repository index itself)
+        - _fixtures (an offline snapshot)
+        - Other / not listed here
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The `version` field of the manifest entry (or of the plugin's `// ==Plugin==` header).
+      placeholder: "1.0.1"
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host
+      description: Which host and version you ran the plugin in — e.g. the `lingshu` CLI / runtime version, or the iOS app version.
+      placeholder: "lingshu CLI 0.1.0 (node 20.11.0) / iOS app 0.1.62"
+    validations:
+      required: true
+  - type: dropdown
+    id: action
+    attributes:
+      label: Action
+      options:
+        - list
+        - detail
+        - manifest / repository loading
+        - other (describe below)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you observed, and what you expected instead. Mention whether it reproduces with the bundled fixture (no network) or only live.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        Exact commands. Prefer `--fixture`, and replace paths and URLs with placeholders. If the live page
+        changed, attach a minimal synthetic snippet instead of the real page.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Command output or the error/stack trace, redacted of anything site-specific or personal.
+      render: shell
+    validations:
+      required: false

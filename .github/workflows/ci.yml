@@ -1,0 +1,134 @@
+# CI for the published lingshu-plugins snapshot.
+#
+# This file is injected from the upstream template on every release. Do not edit it in this repository —
+# local edits are overwritten and cannot be reviewed (see CONTRIBUTING.md §1); propose workflow changes
+# upstream through an issue or a pull-request description instead.
+#
+# Layout note: in this repository the plugin directory *is* the repository root, so the manifest sits at
+# `manifest.json` and every entry's `file` is a root-relative path (`<id>.plugin.js`). The workflow below
+# therefore runs from the repository root and needs no path rewrites.
+#
+# What this checks — and what it deliberately does not:
+#   * checks  : `manifest.json` parses; every entry has the required string fields; every `file` exists at
+#               the repository root and is named `<id>.plugin.js`; `nsfw` is present and exactly 0; no
+#               root-level `*.plugin.js` is missing from the manifest.
+#   * does not: review content, grade a plugin, scan for site names, or install anything. Content review is
+#               a human step against CONTENT-POLICY.md, and the forbidden-name gate runs in the upstream
+#               publish pipeline (its pattern list is intentionally not published anywhere).
+#
+# No third-party dependency is used or installed: the repository has no `package.json`, and the whole check
+# is a single `node -e` script so that a contributor can reproduce CI exactly with the local `node` they
+# already have.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate manifest and plugin files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `cache:` here on purpose: this repository has no lockfile to key a cache on.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate manifest.json, plugin files and the nsfw field
+        run: |
+          node -e '
+          const fs = require("node:fs");
+
+          const errors = [];
+          const fail = (message) => errors.push(message);
+
+          if (!fs.existsSync("manifest.json")) {
+            console.error("manifest.json is missing at the repository root");
+            process.exit(1);
+          }
+
+          let manifest;
+          try {
+            manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+          } catch (error) {
+            console.error("manifest.json is not valid JSON: " + error.message);
+            process.exit(1);
+          }
+
+          if (!manifest || !Array.isArray(manifest.plugins) || manifest.plugins.length === 0) {
+            console.error("manifest.json must be an object with a non-empty plugins[] array");
+            process.exit(1);
+          }
+
+          const listed = new Set();
+          const required = ["id", "name", "version", "author", "description", "file", "sourceUrl"];
+
+          manifest.plugins.forEach((plugin, index) => {
+            const at = "plugins[" + index + "]" + (plugin && plugin.id ? " (" + plugin.id + ")" : "");
+            if (!plugin || typeof plugin !== "object" || Array.isArray(plugin)) {
+              fail(at + ": entry is not an object");
+              return;
+            }
+
+            required.forEach((key) => {
+              if (typeof plugin[key] !== "string" || plugin[key].trim() === "") {
+                fail(at + ": field \"" + key + "\" is missing or empty");
+              }
+            });
+
+            if (typeof plugin.file === "string" && plugin.file.trim() !== "") {
+              if (!plugin.file.endsWith(".plugin.js")) {
+                fail(at + ": file must end with .plugin.js: " + plugin.file);
+              }
+              if (typeof plugin.id === "string" && plugin.id.trim() !== "" && plugin.file !== plugin.id + ".plugin.js") {
+                fail(at + ": file must be named <id>.plugin.js: " + plugin.file);
+              }
+              if (!fs.existsSync(plugin.file)) {
+                fail(at + ": file does not exist at the repository root: " + plugin.file);
+              }
+              if (listed.has(plugin.file)) {
+                fail(at + ": duplicate file reference: " + plugin.file);
+              }
+              listed.add(plugin.file);
+            }
+
+            // The nsfw field is required and must be exactly 0 in this repository: the field is kept in the
+            // format so hosts can reason about it, but nothing above 0 is ever published here.
+            if (!Object.prototype.hasOwnProperty.call(plugin, "nsfw")) {
+              fail(at + ": the nsfw field is required (this repository only publishes nsfw: 0)");
+            } else if (plugin.nsfw !== 0) {
+              fail(at + ": nsfw must be 0, got " + JSON.stringify(plugin.nsfw));
+            }
+          });
+
+          // A plugin file at the repository root that no manifest entry points at is not installable and
+          // must not be silently shipped.
+          fs.readdirSync(".")
+            .filter((name) => name.endsWith(".plugin.js"))
+            .forEach((name) => {
+              if (!listed.has(name)) fail("plugin file at the repository root is not listed in manifest.json: " + name);
+            });
+
+          if (errors.length > 0) {
+            console.error("manifest / plugin validation failed:");
+            errors.forEach((message) => console.error("  - " + message));
+            process.exit(1);
+          }
+
+          console.log(
+            "manifest.json OK: " + manifest.plugins.length + " plugins, all files present, all nsfw === 0"
+          );
+          '

@@ -1,0 +1,29 @@
+# Issue chooser configuration.
+# Injected from the upstream template on every release — do not edit it in this repository.
+#
+# Blank issues are disabled on purpose: every report here has to go through a template that asks for
+# content-neutral reporting, so that this issue tracker never becomes an index of sources that are outside
+# CONTENT-POLICY.md.
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: Security report (private)
+    url: https://github.com/kongtong9527/lingshu-plugins/security/advisories/new
+    about: Do not report security issues in a public issue. The threat model and the reporting process are in SECURITY.md.
+
+  - name: What may be published here (content policy)
+    url: https://github.com/kongtong9527/lingshu-plugins/blob/main/CONTENT-POLICY.md
+    about: Public, anonymously reachable, no account, no circumvention. Adult, pirate and paywall-bypassing plugins are refused — in code, fixtures, docs and issues alike — and the policy has no exceptions.
+
+  - name: Copyright concern (DMCA)
+    url: https://github.com/kongtong9527/lingshu-plugins/blob/main/CONTENT-POLICY.md#5-版权投诉--dmca
+    about: How to raise a copyright concern about a file in this repository, and what we do with a valid notice. There is no mailbox for this repository — an issue and GitHub's official DMCA channel are the only intake routes.
+
+  - name: Writing a plugin (skill package)
+    url: https://github.com/kongtong9527/lingshu-runtime/tree/main/skills/lingshu-plugin-dev
+    about: How to author a .plugin.js plugin — workflow, $lib reference, card DSL reference and a template, in the runtime repository.
+
+  - name: This repository is a published snapshot
+    url: https://github.com/kongtong9527/lingshu-plugins/blob/main/CONTRIBUTING.md
+    about: Releases replace the tracked tree with an upstream snapshot; CI files are injected from upstream templates and must not be edited here; pull requests have to be carried upstream to take effect.
