@@ -186,10 +186,10 @@ claimed, and this project is unaffiliated with any third-party site, application
 | --- | --- |
 | [`kongtong9527/lingshu-runtime`](https://github.com/kongtong9527/lingshu-runtime) | The runtime: `node:vm` sandbox, `$lib` API, `lingshu` CLI, contracts and the plugin-development skill package |
 | [`kongtong9527/lingshu-devconsole`](https://github.com/kongtong9527/lingshu-devconsole) | Web dev console: visual plugin runs, request tracing, preview and playback diagnostics |
-| [`kongtong9527/lingshu-ios`](https://github.com/kongtong9527/lingshu-ios) | SwiftUI + JavaScriptCore host that runs the same `.plugin.js` files on device (GPL-3.0-or-later, self-signed source release) |
+| `lingshu-ios` | SwiftUI + JavaScriptCore host that runs the same `.plugin.js` files on device (source not published yet) |
 
 Each repository is an independent snapshot with its own license; none of them contains content sources.
 
 ---
 
-Snapshot: `2026-10-17` · snapshot tag `v0.1.7`
+Snapshot: `2026-10-17` · snapshot tag `v0.1.8`

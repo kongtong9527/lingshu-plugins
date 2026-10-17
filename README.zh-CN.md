@@ -172,10 +172,10 @@ MIT，见 [LICENSE](LICENSE)。随仓分发的第三方材料、插件经 `$lib`
 | --- | --- |
 | [`kongtong9527/lingshu-runtime`](https://github.com/kongtong9527/lingshu-runtime) | 运行时：`node:vm` 沙箱、`$lib` 接口、`lingshu` 命令行、契约与插件开发技能包 |
 | [`kongtong9527/lingshu-devconsole`](https://github.com/kongtong9527/lingshu-devconsole) | Web 调试台：可视化跑插件、请求追踪、预览与播放诊断 |
-| [`kongtong9527/lingshu-ios`](https://github.com/kongtong9527/lingshu-ios) | SwiftUI + JavaScriptCore 宿主，在设备上跑同一份 `.plugin.js`（GPL-3.0-or-later，自签源码发行） |
+| `lingshu-ios` | SwiftUI + JavaScriptCore 宿主，在设备上跑同一份 `.plugin.js`（**源码暂未公开**） |
 
 每个仓库都是独立快照、各自持有许可；它们都不含任何内容源。
 
 ---
 
-快照：`2026-10-17` · 快照 tag `v0.1.7`
+快照：`2026-10-17` · 快照 tag `v0.1.8`
