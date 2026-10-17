@@ -84,8 +84,8 @@ cd lingshu-plugins
 
 ```bash
 # 运行时上 npm 之后（目前还没上，见下方运行时仓）：
-npx @lingshu/runtime list --dir .
-npx @lingshu/runtime run github-trending list --dir .
+npx lingshu-runtime list --dir .
+npx lingshu-runtime run github-trending list --dir .
 
 # 在此之前，构建一份运行时仓的检出，直接用它的命令行：
 node /path/to/lingshu-runtime/dist/index.js list --dir .
@@ -178,4 +178,4 @@ MIT，见 [LICENSE](LICENSE)。随仓分发的第三方材料、插件经 `$lib`
 
 ---
 
-快照：`2026-10-17` · 版本 `0.1.0`
+快照：`2026-10-17` · 快照 tag `v0.1.7`

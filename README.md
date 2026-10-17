@@ -94,8 +94,8 @@ Plugins need a **host** to run in; this repository has none. Use the runtime and
 
 ```bash
 # Once the runtime is on npm (it is not yet — see the runtime repository below):
-npx @lingshu/runtime list --dir .
-npx @lingshu/runtime run github-trending list --dir .
+npx lingshu-runtime list --dir .
+npx lingshu-runtime run github-trending list --dir .
 
 # Until then, build a checkout of the runtime repository and use its CLI directly:
 node /path/to/lingshu-runtime/dist/index.js list --dir .
@@ -192,4 +192,4 @@ Each repository is an independent snapshot with its own license; none of them co
 
 ---
 
-Snapshot: `2026-10-17` · version `0.1.0`
+Snapshot: `2026-10-17` · snapshot tag `v0.1.7`
