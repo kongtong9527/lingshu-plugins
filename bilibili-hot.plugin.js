@@ -65,7 +65,7 @@ module.exports = {
       ? $lib.dayjs(publishTs).format('YYYY-MM-DD HH:mm')
       : '未知'
     const blocks = [
-      // B 站详情页 URL 不是媒体直链，不能当 video.url 硬播；走懒解析（ADR-0026）：
+      // B 站详情页 URL 不是媒体直链，不能当 video.url 硬播；走懒解析：
       // 点播时才 fetchPlayUrl（bvid → cid → HTML5 playurl 接口）现算出 mp4 直链。
       { type: 'video', target: { action: 'play', url: `https://www.bilibili.com/video/${bvid}` }, poster: data.pic, duration: data.duration, platform: 'bilibili' },
       { type: 'heading', content: '视频简介', level: 3 },
@@ -85,7 +85,7 @@ module.exports = {
   },
 
   async fetchPlayUrl(url) {
-    // 懒播放解析（ADR-0020/0026）：B站视频页 → cid → HTML5 playurl（免 wbi 签名）→ mp4 直链。
+    // 懒播放解析：B站视频页 → cid → HTML5 playurl（免 wbi 签名）→ mp4 直链。
     const bvid = String(url).match(/BV\w+/)?.[0]
     if (!bvid) throw new Error('无效的B站链接')
     const view = JSON.parse((await $lib.http.get(
