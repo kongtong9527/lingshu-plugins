@@ -192,4 +192,4 @@ Each repository is an independent snapshot with its own license; none of them co
 
 ---
 
-Snapshot: `2026-10-17` · snapshot tag `v0.1.8`
+Snapshot: `2026-10-19` · snapshot tag `v0.1.13`
