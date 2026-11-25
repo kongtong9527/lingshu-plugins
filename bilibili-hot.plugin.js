@@ -1,11 +1,16 @@
 // ==Plugin==
 // id: bilibili-hot
 // name: B站热门
-// version: 1.0.0
+// version: 1.0.2
 // author: lingshu
 // description: B站热门视频列表与详情
 // sourceUrl: https://www.bilibili.com/v/popular
-// tags: video,hot,bilibili
+// categories: video
+// tags: hot,bilibili
+// languages: zh-Hans
+// contentRating: safe
+// minRuntimeVersion: 1.7.0
+// iconUrl: https://www.google.com/s2/favicons?domain=bilibili.com&sz=256
 // ==EndPlugin==
 
 /** B 站 API/媒体请求统一头（playurl 直链实测校验 Referer，缺 Referer 403） */
@@ -19,8 +24,8 @@ module.exports = {
   name: 'B站热门',
   version: '1.0.0',
 
-  async fetchList(context) {
-    const page = context?.page || 1
+  async fetchList(entry) {
+    const page = entry?.page || 1
     const url = `https://api.bilibili.com/x/web-interface/popular?pn=${page}&ps=20`
     const res = await $lib.http.get(url, { headers: BILI_HEADERS })
     const json = JSON.parse(res.body)
@@ -50,7 +55,8 @@ module.exports = {
     }
   },
 
-  async fetchDetail(url) {
+  async fetchDetail(entry) {
+    const url = String((entry && entry.url) || '')
     const bvid = url.match(/BV\w+/)?.[0]
     if (!bvid) throw new Error('无效的B站链接')
     const res = await $lib.http.get(
@@ -84,7 +90,8 @@ module.exports = {
     }
   },
 
-  async fetchPlayUrl(url) {
+  async fetchPlayUrl(entry) {
+    const url = String((entry && entry.url) || '')
     // 懒播放解析：B站视频页 → cid → HTML5 playurl（免 wbi 签名）→ mp4 直链。
     const bvid = String(url).match(/BV\w+/)?.[0]
     if (!bvid) throw new Error('无效的B站链接')

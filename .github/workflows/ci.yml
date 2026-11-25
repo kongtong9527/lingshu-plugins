@@ -5,13 +5,13 @@
 # upstream through an issue or a pull-request description instead.
 #
 # Layout note: in this repository the plugin directory *is* the repository root, so the manifest sits at
-# `manifest.json` and every entry's `file` is a root-relative path (`<id>.plugin.js`). The workflow below
-# therefore runs from the repository root and needs no path rewrites.
+# `manifest.json` and every entry's source defaults to `<id>.plugin.js` (an optional `fileUrl` may point at
+# an absolute URL). The workflow below therefore runs from the repository root and needs no path rewrites.
 #
 # What this checks — and what it deliberately does not:
-#   * checks  : `manifest.json` parses; every entry has the required string fields; every `file` exists at
-#               the repository root and is named `<id>.plugin.js`; `nsfw` is present and exactly 0; no
-#               root-level `*.plugin.js` is missing from the manifest.
+#   * checks  : `manifest.json` parses; every entry has the required fields; every plugin file exists;
+#               `contentRating` is present and exactly `safe`; the plugin header matches the manifest entry
+#               field by field; no root-level `*.plugin.js` is missing from the manifest.
 #   * does not: review content, grade a plugin, scan for site names, or install anything. Content review is
 #               a human step against CONTENT-POLICY.md, and the forbidden-name gate runs in the upstream
 #               publish pipeline (its pattern list is intentionally not published anywhere).
@@ -47,13 +47,35 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate manifest.json, plugin files and the nsfw field
+      - name: Validate manifest.json, plugin headers and the contentRating field
         run: |
           node -e '
           const fs = require("node:fs");
 
           const errors = [];
           const fail = (message) => errors.push(message);
+          const CATEGORIES = ["video", "comic", "novel", "image", "audio", "news", "live", "code"];
+          const RATINGS = ["safe", "suggestive", "adult"];
+          const LEGACY = ["file", "lang", "nsfw", "capabilities"];
+          const text = (value) => typeof value === "string" && value.trim() !== "";
+          const isHttp = (value) => {
+            if (!/^https?:\/\//i.test(value)) return false;
+            try { new URL(value); return true; } catch { return false; }
+          };
+          const isFileUrl = (value) =>
+            isHttp(value) ||
+            (!value.includes("://") && !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value) && value.endsWith(".plugin.js"));
+          const list = (value) => (value ? value.split(",").map((part) => part.trim()).filter(Boolean) : []);
+          const headerOf = (code) => {
+            const match = code.match(/\/\/ ==Plugin==\r?\n([\s\S]*?)\/\/ ==EndPlugin==/);
+            if (!match) return null;
+            const out = {};
+            for (const line of match[1].split("\n")) {
+              const kv = line.match(/\/\/\s*(\w+):\s*(.+)/);
+              if (kv) out[kv[1]] = kv[2].trim();
+            }
+            return out;
+          };
 
           if (!fs.existsSync("manifest.json")) {
             console.error("manifest.json is missing at the repository root");
@@ -74,7 +96,7 @@ jobs:
           }
 
           const listed = new Set();
-          const required = ["id", "name", "version", "author", "description", "file", "sourceUrl"];
+          const required = ["id", "name", "version", "author", "description", "sourceUrl", "minRuntimeVersion"];
 
           manifest.plugins.forEach((plugin, index) => {
             const at = "plugins[" + index + "]" + (plugin && plugin.id ? " (" + plugin.id + ")" : "");
@@ -84,33 +106,77 @@ jobs:
             }
 
             required.forEach((key) => {
-              if (typeof plugin[key] !== "string" || plugin[key].trim() === "") {
-                fail(at + ": field \"" + key + "\" is missing or empty");
+              if (!text(plugin[key])) fail(at + ": field \"" + key + "\" is missing or empty");
+            });
+
+            if (!Array.isArray(plugin.categories) || plugin.categories.length === 0) {
+              fail(at + ": categories must be a non-empty array");
+            } else {
+              const unknown = plugin.categories.filter((value) => !CATEGORIES.includes(value));
+              if (unknown.length) fail(at + ": unknown categories: " + unknown.join(", "));
+            }
+
+            if (plugin.tags !== undefined) {
+              if (!Array.isArray(plugin.tags) || plugin.tags.some((value) => !text(value))) {
+                fail(at + ": tags must be an optional array of non-empty strings");
+              }
+            }
+
+            if (!Array.isArray(plugin.languages) || plugin.languages.length === 0) {
+              fail(at + ": languages must be a non-empty array (BCP-47, e.g. zh-Hans)");
+            } else {
+              const badLanguages = plugin.languages.filter((value) => !/^[a-zA-Z]{2,8}(?:-[a-zA-Z0-9]{2,8})*$/.test(value));
+              if (badLanguages.length) fail(at + ": invalid language codes: " + badLanguages.join(", "));
+            }
+
+            if (!RATINGS.includes(plugin.contentRating)) {
+              fail(at + ": contentRating must be one of " + RATINGS.join("/"));
+            } else if (plugin.contentRating !== "safe") {
+              fail(at + ": this repository only publishes contentRating: safe, got " + plugin.contentRating);
+            }
+
+            if (plugin.iconUrl !== undefined && !isHttp(plugin.iconUrl)) {
+              fail(at + ": iconUrl must be an absolute http(s) URL");
+            }
+            if (plugin.fileUrl !== undefined && !isFileUrl(plugin.fileUrl)) {
+              fail(at + ": fileUrl must be an absolute http(s) URL or a relative .plugin.js path");
+            }
+
+            LEGACY.forEach((key) => {
+              if (Object.prototype.hasOwnProperty.call(plugin, key)) {
+                fail(at + ": legacy field \"" + key + "\" must be removed");
               }
             });
 
-            if (typeof plugin.file === "string" && plugin.file.trim() !== "") {
-              if (!plugin.file.endsWith(".plugin.js")) {
-                fail(at + ": file must end with .plugin.js: " + plugin.file);
-              }
-              if (typeof plugin.id === "string" && plugin.id.trim() !== "" && plugin.file !== plugin.id + ".plugin.js") {
-                fail(at + ": file must be named <id>.plugin.js: " + plugin.file);
-              }
-              if (!fs.existsSync(plugin.file)) {
-                fail(at + ": file does not exist at the repository root: " + plugin.file);
-              }
-              if (listed.has(plugin.file)) {
-                fail(at + ": duplicate file reference: " + plugin.file);
-              }
-              listed.add(plugin.file);
+            const fileName = plugin.id + ".plugin.js";
+            listed.add(fileName);
+            const localFile = typeof plugin.fileUrl === "string" && !isHttp(plugin.fileUrl)
+              ? plugin.fileUrl
+              : fileName;
+            if (!fs.existsSync(localFile)) {
+              fail(at + ": plugin file does not exist at the repository root: " + localFile);
             }
 
-            // The nsfw field is required and must be exactly 0 in this repository: the field is kept in the
-            // format so hosts can reason about it, but nothing above 0 is ever published here.
-            if (!Object.prototype.hasOwnProperty.call(plugin, "nsfw")) {
-              fail(at + ": the nsfw field is required (this repository only publishes nsfw: 0)");
-            } else if (plugin.nsfw !== 0) {
-              fail(at + ": nsfw must be 0, got " + JSON.stringify(plugin.nsfw));
+            // The plugin header is the single source of truth: the manifest must be generated from it.
+            if (fs.existsSync(fileName)) {
+              const header = headerOf(fs.readFileSync(fileName, "utf8"));
+              if (!header) {
+                fail(at + ": plugin file has no // ==Plugin== header: " + fileName);
+              } else {
+                ["id", "name", "version", "author", "description", "sourceUrl", "contentRating", "minRuntimeVersion", "iconUrl"].forEach((key) => {
+                  if ((plugin[key] ?? null) !== (header[key] ?? null)) {
+                    fail(at + ": " + key + " differs between manifest and plugin header (manifest=" + JSON.stringify(plugin[key] ?? null) + ", header=" + JSON.stringify(header[key] ?? null) + ")");
+                  }
+                });
+                ["categories", "tags", "languages"].forEach((key) => {
+                  if (JSON.stringify(plugin[key] ?? []) !== JSON.stringify(list(header[key]))) {
+                    fail(at + ": " + key + " differs between manifest and plugin header");
+                  }
+                });
+                LEGACY.forEach((key) => {
+                  if (header[key] !== undefined) fail(at + ": plugin header still uses legacy field \"" + key + "\"");
+                });
+              }
             }
           });
 
@@ -129,6 +195,6 @@ jobs:
           }
 
           console.log(
-            "manifest.json OK: " + manifest.plugins.length + " plugins, all files present, all nsfw === 0"
+            "manifest.json OK: " + manifest.plugins.length + " plugins, headers match, all contentRating === safe"
           );
           '

@@ -24,8 +24,8 @@
 
 - [ ] I ran the same check CI runs: the `node -e` validation over `manifest.json` (see CONTRIBUTING.md §4).
 - [ ] I ran the plugin itself against its fixture and pasted the command output below.
-- [ ] If I touched `manifest.json`: the entry's `file` is `<id>.plugin.js`, it exists at the repository root,
-      and `nsfw` is present and exactly `0`.
+- [ ] If I touched `manifest.json`: the source is `<id>.plugin.js` at the repository root (or a valid
+      `fileUrl`), `contentRating` is `safe`, and `categories` / `languages` / `minRuntimeVersion` are present.
 - [ ] If I touched a plugin file: the `// ==Plugin==` metadata header matches the manifest entry
       (`description` matches verbatim) and `module.exports` exports `id` / `name` / `version`.
 - [ ] The fixture I added is a **minimal, hand-trimmed** snapshot — not a mirror of a page or site.

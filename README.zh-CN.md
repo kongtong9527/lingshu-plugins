@@ -27,7 +27,7 @@
 
 | 路径 | 是什么 |
 | --- | --- |
-| `manifest.json` | 宿主读取的仓库索引，一条一个插件，`file` 是相对本仓根目录的路径。 |
+| `manifest.json` | 宿主读取的仓库索引，一条一个插件；源码默认是相对本仓根目录的 `<id>.plugin.js`。 |
 | `*.plugin.js` | 插件本体：单文件自包含 CommonJS，顶部带 `// ==Plugin== … // ==EndPlugin==` 元数据头。 |
 | `_fixtures/<id>/` | 最小离线快照（HTML/JSON），用来在不碰网络的前提下跑通插件。 |
 | `CONTENT-POLICY.md` | 什么能发、什么不能发、拒绝文案怎么写、版权投诉怎么提。 |
@@ -41,8 +41,8 @@
 | `zhihu-daily` | 知乎日报公开页面 | `list`、`detail` |
 | `github-trending` | GitHub Trending 公开页面 | `list`、`detail` |
 
-三个插件的 `nsfw` 全为 `0`。`nsfw` 字段保留在 manifest 格式里（见下）以便宿主判断，但
-**本仓只会发布 `0`**——出现非 0 即是缺陷，CI 会直接失败（`.github/workflows/ci.yml`）。
+三个插件的 `contentRating` 全为 `safe`。该字段保留在 manifest 格式里（见下）以便宿主判断内容，但
+**本仓只会发布 `safe`**——出现其它值即是缺陷，CI 会直接失败（`.github/workflows/ci.yml`）。
 
 ## 怎么用：把本仓加进宿主
 
@@ -65,9 +65,9 @@ manifest 直接指向 raw 文件。
 说明：
 
 - 宿主会缓存 manifest，并在你进入仓库页时刷新；下拉可强制重新拉取。
-- `manifest.json` 里的 `file` 相对仓库基址解析，所以镜像或 fork 本仓一样可用——把宿主指向**你自己的**
+- 源码默认按 `<id>.plugin.js` 相对仓库基址解析，可选的 `fileUrl` 可指向绝对地址，所以镜像或 fork 本仓一样可用——把宿主指向**你自己的**
   raw manifest 地址即可。
-- App 本身不从本仓分发，它是另一个**自签**的源码发行仓，见[相关仓库](#相关仓库)。
+- App 本身不从本仓分发，只在独立的发布仓提供**未签名 IPA**（安装时由你自己签名），见[相关仓库](#相关仓库)。
 
 ## 手动使用
 
@@ -115,13 +115,14 @@ node /path/to/lingshu-runtime/dist/index.js run zhihu-daily detail https://examp
 | `version` | 是 | 版本串；manifest 里的版本更高时宿主会提示更新。 |
 | `author` | 是 | 作者/维护者。 |
 | `description` | 是 | 一句话描述，必须与插件元数据头一致。 |
-| `file` | 是 | 插件相对仓库根的路径，必须真实存在——CI 会校验。 |
 | `sourceUrl` | 是 | 插件读取的站点（公开 URL）。 |
-| `categories` | 否 | 自由标签，供宿主分组。 |
-| `lang` | 否 | 内容语言，如 `zh`、`en`。 |
-| `nsfw` | **是** | 内容分级。本仓只允许 `0`；字段必须存在且必须为 `0`——CI 两项都查。 |
-| `capabilities` | 否 | 插件实现了哪些动作：`list`、`detail`、`reading`、`categories`、`listings`、`explore`、`tags`、`search`、`play`、`settings`、`account`。 |
-| `minRuntimeVersion` | 否 | 能运行该插件的最低运行时版本。 |
+| `categories` | 是 | **受控内容分类**（非空数组）：`video`、`comic`、`novel`、`image`、`audio`、`news`、`live`、`code`。只表达内容形态，不要放 `search`/`reading` 这类能力词。 |
+| `tags` | 否 | 自由标签（站点特征/题材/地区），如 `manga`、`jav`、`vip`。 |
+| `languages` | 是 | BCP-47 语言数组，第一项为主语言：`zh-Hans`、`zh-Hant`、`en`、`ja`、`ko`。 |
+| `contentRating` | **是** | 内容分级：`safe`、`suggestive`、`adult`。本仓只收 `safe`——CI 会拦。 |
+| `minRuntimeVersion` | 是 | 能运行该插件的最低**运行时契约版本**（不是 App 版本，也不是 npm 包版本）。 |
+| `iconUrl` | 否 | 插件图标的绝对 `http(s)` URL；缺省由宿主按分类图标/名称首字回退。 |
+| `fileUrl` | 否 | **仅 manifest 可声明**：插件源码地址，绝对 `http(s)` URL 或相对 manifest 的 `.plugin.js` 路径；缺省 = `<id>.plugin.js`。 |
 
 插件文件自身在元数据头里携带同一份身份信息，宿主在「单文件直链导入」时解析它：
 
@@ -129,16 +130,21 @@ node /path/to/lingshu-runtime/dist/index.js run zhihu-daily detail https://examp
 // ==Plugin==
 // id: github-trending
 // name: GitHub 趋势
-// version: 1.0.1
+// version: 1.0.3
 // author: lingshu
 // description: GitHub 趋势仓库
 // sourceUrl: https://github.com/trending
-// tags: code,trending,github
+// categories: code
+// tags: trending,github
+// languages: zh-Hans
+// contentRating: safe
+// minRuntimeVersion: 1.6.0
 // ==EndPlugin==
 ```
 
-元数据头里的 `description` 必须与 `manifest.json` 里的一致，且插件必须从 `module.exports`
-导出 `id`、`name`、`version`。
+插件头是内容元数据的**唯一手工事实源**：`manifest.json` 可用 `lingshu manifest --write` 由它生成，
+两边逐字段相等（唯一例外是仅清单可声明的 `fileUrl`）。插件还必须从 `module.exports` 导出
+`id`、`name`、`version`。
 
 ## 贡献
 
@@ -151,7 +157,7 @@ node /path/to/lingshu-runtime/dist/index.js run zhihu-daily detail https://examp
   代码、fixture、文档、issue 同样适用。
 - 任何站点凭证、token、cookie 与个人数据都不得提交——任何位置都不行。
 - 提交请带 DCO 签名（`git commit -s`），本项目不采用 CLA。
-- CI（ubuntu，零额外依赖）校验 `manifest.json`、每条 `file` 路径与 `nsfw` 字段。
+- CI（ubuntu，零额外依赖）校验 `manifest.json`、每个插件文件、插件头 ↔ 清单逐字段相等，以及所有条目的 `contentRating` 为 `safe`。
 
 ## 安全
 
@@ -172,10 +178,10 @@ MIT，见 [LICENSE](LICENSE)。随仓分发的第三方材料、插件经 `$lib`
 | --- | --- |
 | [`kongtong9527/lingshu-runtime`](https://github.com/kongtong9527/lingshu-runtime) | 运行时：`node:vm` 沙箱、`$lib` 接口、`lingshu` 命令行、契约与插件开发技能包 |
 | [`kongtong9527/lingshu-devconsole`](https://github.com/kongtong9527/lingshu-devconsole) | Web 调试台：可视化跑插件、请求追踪、预览与播放诊断 |
-| `lingshu-ios` | SwiftUI + JavaScriptCore 宿主，在设备上跑同一份 `.plugin.js`（**源码暂未公开**） |
+| [`kongtong9527/Lingshu-releases`](https://github.com/kongtong9527/Lingshu-releases) | iOS 安装包发布页：未签名 IPA，需自签安装（宿主源码暂未公开） |
 
 每个仓库都是独立快照、各自持有许可；它们都不含任何内容源。
 
 ---
 
-快照：`2026-10-20` · 快照 tag `v0.1.16`
+快照：`2026-11-25` · 快照 tag `v0.1.398`

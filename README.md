@@ -32,7 +32,7 @@
 
 | Path | What it is |
 | --- | --- |
-| `manifest.json` | The repository index a host reads. One entry per plugin, with a `file` path relative to this repository's root. |
+| `manifest.json` | The repository index a host reads. One entry per plugin; the source defaults to `<id>.plugin.js` relative to this repository's root. |
 | `*.plugin.js` | The plugins themselves: one self-contained CommonJS file each, with an `// ==Plugin== … // ==EndPlugin==` metadata header. |
 | `_fixtures/<id>/` | Minimal offline snapshots (HTML/JSON) used to run a plugin without touching the network. |
 | `CONTENT-POLICY.md` | What may and may not be published here, how a rejection is worded, and how to raise a copyright concern. |
@@ -46,8 +46,8 @@
 | `zhihu-daily` | Public daily-selection pages of Zhihu Daily | `list`, `detail` |
 | `github-trending` | Public GitHub Trending pages | `list`, `detail` |
 
-All three are `nsfw: 0`. The `nsfw` field is kept in the manifest format (see below) so hosts can reason
-about it, but **this repository only ever publishes the value `0`** — a non-zero entry is a bug, and CI
+All three are `contentRating: safe`. The field is part of the manifest format (see below) so hosts can
+reason about content, but **this repository only ever publishes `safe`** — anything else is a bug, and CI
 fails on it (`.github/workflows/ci.yml`).
 
 ## Using it: add this repository to a host
@@ -74,10 +74,11 @@ Notes:
 
 - The host caches the manifest and refreshes it when you open the repository page; a pull-to-refresh forces
   a fetch.
-- `file` values in `manifest.json` are relative to the repository base URL, so a mirror or a fork of this
-  repository works the same way — point the host at *your* raw manifest URL.
-- The app itself is not distributed from this repository. It is a separate, self-signed source release; see
-  [Related repositories](#related-repositories).
+- Source addresses default to `<id>.plugin.js` relative to the repository base URL; an optional `fileUrl`
+  can point at an absolute URL. A mirror or a fork of this repository works the same way — point the host
+  at *your* raw manifest URL.
+- The app itself is not distributed from this repository. It is published as **unsigned IPAs** in a separate
+  release repository, self-signed by the user on install; see [Related repositories](#related-repositories).
 
 ## Manually
 
@@ -125,13 +126,14 @@ repository under `skills/lingshu-plugin-dev/`.
 | `version` | yes | Semver-ish version string. A higher version in the manifest is what makes a host offer an update. |
 | `author` | yes | Author or maintainer name. |
 | `description` | yes | One-line description. Must match the plugin's metadata header. |
-| `file` | yes | Path to the plugin, relative to the repository root. Must exist — CI checks it. |
 | `sourceUrl` | yes | The site the plugin reads (a public URL). |
-| `categories` | no | Free-form tags used for grouping in the host UI. |
-| `lang` | no | Content language, e.g. `zh`, `en`. |
-| `nsfw` | **yes** | Content rating. `0` only in this repository. The field must be present and must be `0` — CI checks both. |
-| `capabilities` | no | Which actions the plugin implements: `list`, `detail`, `reading`, `categories`, `listings`, `explore`, `tags`, `search`, `play`, `settings`, `account`. |
-| `minRuntimeVersion` | no | Lowest runtime version that can run the plugin. |
+| `categories` | yes | Controlled content categories (non-empty): `video`, `comic`, `novel`, `image`, `audio`, `news`, `live`, `code`. Content shape only — no capability words like `search`/`reading`. |
+| `tags` | no | Free-form tags (site traits, genres, regions), e.g. `manga`, `jav`, `vip`. |
+| `languages` | yes | BCP-47 language array, primary language first: `zh-Hans`, `zh-Hant`, `en`, `ja`, `ko`. |
+| `contentRating` | **yes** | `safe`, `suggestive` or `adult`. This repository only accepts `safe` — CI enforces it. |
+| `minRuntimeVersion` | yes | Lowest runtime **contract** version that can run the plugin (not the App version and not the npm package version). |
+| `iconUrl` | no | Absolute `http(s)` URL of the plugin icon. Hosts fall back to a category icon / name initial. |
+| `fileUrl` | no | Manifest-only source address: absolute `http(s)` URL or a `.plugin.js` path relative to the manifest. Defaults to `<id>.plugin.js`. |
 
 The plugin file itself carries the same identity in its metadata header, which the host parses when a file
 is imported directly:
@@ -140,16 +142,21 @@ is imported directly:
 // ==Plugin==
 // id: github-trending
 // name: GitHub 趋势
-// version: 1.0.1
+// version: 1.0.3
 // author: lingshu
 // description: GitHub 趋势仓库
 // sourceUrl: https://github.com/trending
-// tags: code,trending,github
+// categories: code
+// tags: trending,github
+// languages: zh-Hans
+// contentRating: safe
+// minRuntimeVersion: 1.6.0
 // ==EndPlugin==
 ```
 
-The `description` in the header and in `manifest.json` must match, and the plugin exports `id`, `name` and
-`version` from `module.exports` as well.
+The plugin header is the **single source of truth** for content metadata. `manifest.json` can be generated
+from it with `lingshu manifest --write`; every field must match the header (the only exception is the
+manifest-only `fileUrl`). The plugin exports `id`, `name` and `version` from `module.exports` as well.
 
 ## Contributing
 
@@ -163,7 +170,8 @@ Read [CONTENT-POLICY.md](CONTENT-POLICY.md) first — it is the binding rule her
   pirate and paywall-bypassing plugins are refused, in code, fixtures, docs and issues alike.
 - No site credentials, tokens, cookies or personal data may be committed — anywhere.
 - Sign every commit off (`git commit -s`, DCO). This project does not use a CLA.
-- CI (ubuntu, no extra dependencies) validates `manifest.json`, every `file` path, and the `nsfw` field.
+- CI (ubuntu, no extra dependencies) validates `manifest.json`, every plugin file, the header ↔ manifest
+  field equality, and that every entry is `contentRating: safe`.
 
 ## Security
 
@@ -186,10 +194,10 @@ claimed, and this project is unaffiliated with any third-party site, application
 | --- | --- |
 | [`kongtong9527/lingshu-runtime`](https://github.com/kongtong9527/lingshu-runtime) | The runtime: `node:vm` sandbox, `$lib` API, `lingshu` CLI, contracts and the plugin-development skill package |
 | [`kongtong9527/lingshu-devconsole`](https://github.com/kongtong9527/lingshu-devconsole) | Web dev console: visual plugin runs, request tracing, preview and playback diagnostics |
-| `lingshu-ios` | SwiftUI + JavaScriptCore host that runs the same `.plugin.js` files on device (source not published yet) |
+| [`kongtong9527/Lingshu-releases`](https://github.com/kongtong9527/Lingshu-releases) | iOS release page: unsigned IPAs for self-signing (host source not published yet) |
 
 Each repository is an independent snapshot with its own license; none of them contains content sources.
 
 ---
 
-Snapshot: `2026-10-20` · snapshot tag `v0.1.16`
+Snapshot: `2026-11-25` · snapshot tag `v0.1.398`

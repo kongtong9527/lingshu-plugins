@@ -1,11 +1,16 @@
 // ==Plugin==
 // id: zhihu-daily
 // name: 知乎日报
-// version: 1.0.1
+// version: 1.0.3
 // author: lingshu
 // description: 知乎日报每日精选
 // sourceUrl: https://daily.zhihu.com
-// tags: news,daily,zhihu
+// categories: news
+// tags: daily,zhihu
+// languages: zh-Hans
+// contentRating: safe
+// minRuntimeVersion: 1.7.0
+// iconUrl: https://www.google.com/s2/favicons?domain=zhihu.com&sz=256
 // ==EndPlugin==
 
 module.exports = {
@@ -13,7 +18,7 @@ module.exports = {
   name: '知乎日报',
   version: '1.0.1',
 
-  async fetchList() {
+  async fetchList(entry) {
     const res = await $lib.http.get('https://daily.zhihu.com/api/4/news/latest', {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }
     })
@@ -32,7 +37,8 @@ module.exports = {
     return { items }
   },
 
-  async fetchDetail(url) {
+  async fetchDetail(entry) {
+    const url = String((entry && entry.url) || '')
     const id = url.match(/\/story\/(\d+)/)?.[1]
     if (!id) throw new Error('无效的知乎日报链接')
     const res = await $lib.http.get(`https://daily.zhihu.com/api/4/news/${id}`, {

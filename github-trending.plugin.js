@@ -1,11 +1,16 @@
 // ==Plugin==
 // id: github-trending
 // name: GitHub 趋势
-// version: 1.0.1
+// version: 1.0.3
 // author: lingshu
 // description: GitHub 趋势仓库
 // sourceUrl: https://github.com/trending
-// tags: code,trending,github
+// categories: code
+// tags: trending,github
+// languages: zh-Hans
+// contentRating: safe
+// minRuntimeVersion: 1.7.0
+// iconUrl: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
 // ==EndPlugin==
 
 function relativeTime(ts) {
@@ -23,8 +28,8 @@ module.exports = {
   name: 'GitHub 趋势',
   version: '1.0.1',
 
-  async fetchList(context) {
-    const lang = context?.category ? `/${context.category}` : ''
+  async fetchList(entry) {
+    const lang = entry?.category ? `/${entry.category}` : ''
     const url = `https://github.com/trending${lang}?since=daily`
     const res = await $lib.http.get(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' }
@@ -52,7 +57,8 @@ module.exports = {
     return { items }
   },
 
-  async fetchDetail(url) {
+  async fetchDetail(entry) {
+    const url = String((entry && entry.url) || '')
     const match = url.match(/github\.com\/([^/]+\/[^/]+)/)
     if (!match) throw new Error('无效的 GitHub 链接')
     const repo = match[1].replace(/\s+/g, '')

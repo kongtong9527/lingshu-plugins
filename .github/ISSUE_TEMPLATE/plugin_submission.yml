@@ -27,7 +27,7 @@ body:
           required: true
         - label: The plugin does **not** circumvent any technical measure — no membership/paywall bypass, no DRM circumvention, no leaked site secret, no forged subscription state, no anti-bot evasion service.
           required: true
-        - label: The source is **not** an adult/sexual content site, and the plugin's content is not adult content (`nsfw` stays `0`).
+        - label: The source is **not** an adult/sexual content site, and the plugin's content is not adult content (`contentRating` stays `safe`).
           required: true
         - label: The source is **not** a pirate/unauthorised aggregator of copyrighted works (comics, film/TV, books, music).
           required: true
@@ -71,7 +71,7 @@ body:
     id: capabilities
     attributes:
       label: Capabilities implemented
-      description: Tick every action the plugin really implements. Declaring an action that is only a stub is a rejection reason.
+      description: Tick every action the plugin really implements (for review only — it is not a manifest field; the host probes exported functions at runtime). Declaring an action that is only a stub is a rejection reason.
       multiple: true
       options:
         - list
@@ -109,11 +109,11 @@ body:
       options:
         - label: The plugin is a single self-contained `<id>.plugin.js` — no `require`/`import` of external modules, external access only through the host's `$lib`.
           required: true
-        - label: The `// ==Plugin==` header is complete and its `description` matches the `manifest.json` entry verbatim; `module.exports` exports `id`, `name` and `version`.
+        - label: The `// ==Plugin==` header is complete and matches the `manifest.json` entry field by field (`fileUrl` is manifest-only); `module.exports` exports `id`, `name` and `version`.
           required: true
         - label: >-
-            The `manifest.json` entry uses `file` = `<id>.plugin.js` (the file exists at the repository root)
-            and sets `nsfw` to 0.
+            The `manifest.json` entry defaults to `<id>.plugin.js` (the file exists at the repository root) or
+            declares a valid `fileUrl`, and sets `contentRating` to `safe`.
           required: true
         - label: The fixture is a minimal, hand-trimmed snapshot (not a page/site mirror) and contains no personal data.
           required: true

@@ -40,15 +40,21 @@
 CI 只做**结构性校验**（ubuntu、零额外依赖），你也可以在本地跑同一套：
 
 ```bash
-# 1) manifest 可解析、每条 file 存在、nsfw 存在且为 0（与 CI 同口径的简写版）
+# 1) manifest 可解析、每条插件文件存在、contentRating 为 safe、受控字段齐全（与 CI 同口径的简写版）
 node -e '
 const fs = require("node:fs")
 const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"))
+const cats = ["video", "comic", "novel", "image", "audio", "news", "live", "code"]
 let bad = 0
 for (const p of m.plugins) {
-  if (!p.file || !fs.existsSync(p.file)) { console.error(`${p.id}: file 不存在`); bad++ }
-  if (!("nsfw" in p) || p.nsfw !== 0) { console.error(`${p.id}: nsfw 必须存在且为 0`); bad++ }
-  if (p.file !== `${p.id}.plugin.js`) { console.error(`${p.id}: 文件名必须等于 <id>.plugin.js`); bad++ }
+  const file = `${p.id}.plugin.js`
+  if (!fs.existsSync(file)) { console.error(`${p.id}: ${file} 不存在`); bad++ }
+  if (p.contentRating !== "safe") { console.error(`${p.id}: contentRating 必须为 safe`); bad++ }
+  if (!Array.isArray(p.categories) || p.categories.length === 0 || p.categories.some((c) => !cats.includes(c))) {
+    console.error(`${p.id}: categories 非法`); bad++
+  }
+  if (!Array.isArray(p.languages) || p.languages.length === 0) { console.error(`${p.id}: languages 必须非空`); bad++ }
+  if (!p.minRuntimeVersion) { console.error(`${p.id}: 缺 minRuntimeVersion`); bad++ }
 }
 if (bad) process.exit(1)
 console.log(`manifest.json OK（${m.plugins.length} 个插件）`)
@@ -69,11 +75,12 @@ node /path/to/lingshu-runtime/dist/index.js run github-trending list --dir . \
 
 - [ ] 站点可匿名访问（无 Cookie 可取得列表页），你在 PR 里说明这一点；
 - [ ] 单文件 `<id>.plugin.js`，自包含，不 `require` 外部模块，只经 `$lib` 访问外部能力；
-- [ ] 顶部 `// ==Plugin== … // ==EndPlugin==` 元数据头完整（`id` / `name` / `version` 必填），
-      `description` 与 `manifest.json` 条目**逐字一致**；
+- [ ] 顶部 `// ==Plugin== … // ==EndPlugin==` 元数据头完整（`id` / `name` / `version` / `description` /
+      `sourceUrl` / `categories` / `languages` / `contentRating` / `minRuntimeVersion` 必填），
+      且与 `manifest.json` 条目**逐字段一致**（`fileUrl` 除外，它只写在清单里）；
 - [ ] `module.exports` 导出 `id` / `name` / `version`；
-- [ ] `manifest.json` 追加一条，`file` 为 `<id>.plugin.js`，**`nsfw: 0`**，
-      `capabilities` 与实际实现的方法一一对应；
+- [ ] `manifest.json` 追加一条，**`contentRating: "safe"`**；源码默认按 `<id>.plugin.js`，外部地址写
+      `fileUrl`；不要写 `file` / `lang` / `nsfw` / `capabilities`（已退役）；
 - [ ] 附带 `_fixtures/<id>/` 最小离线快照，断网可跑通 `list`（及其声明的其它能力）；
 - [ ] fixture 是**手裁过的最小片段**，不是整站镜像；不含个人数据、不含凭证、不含可识别到具体用户的内容；
 - [ ] 不含站点密钥、账号、Cookie、token（包括注释与示例数据里的）；

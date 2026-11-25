@@ -3,62 +3,65 @@
     {
       "id": "bilibili-hot",
       "name": "B站热门",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "author": "lingshu",
       "description": "B站热门视频列表与详情",
-      "file": "bilibili-hot.plugin.js",
       "sourceUrl": "https://www.bilibili.com/v/popular",
       "categories": [
-        "video",
-        "hot"
+        "video"
       ],
-      "lang": "zh",
-      "nsfw": 0,
-      "capabilities": [
-        "list",
-        "detail"
+      "tags": [
+        "hot",
+        "bilibili"
       ],
-      "minRuntimeVersion": "1.0.0"
+      "languages": [
+        "zh-Hans"
+      ],
+      "contentRating": "safe",
+      "minRuntimeVersion": "1.7.0",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=bilibili.com&sz=256"
     },
     {
       "id": "github-trending",
       "name": "GitHub 趋势",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "author": "lingshu",
       "description": "GitHub 趋势仓库",
-      "file": "github-trending.plugin.js",
       "sourceUrl": "https://github.com/trending",
       "categories": [
-        "code",
-        "trending"
+        "code"
       ],
-      "lang": "zh",
-      "nsfw": 0,
-      "capabilities": [
-        "list",
-        "detail"
+      "tags": [
+        "trending",
+        "github"
       ],
-      "minRuntimeVersion": "1.0.0"
+      "languages": [
+        "zh-Hans"
+      ],
+      "contentRating": "safe",
+      "minRuntimeVersion": "1.7.0",
+      "iconUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
     },
     {
       "id": "zhihu-daily",
       "name": "知乎日报",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "author": "lingshu",
       "description": "知乎日报每日精选",
-      "file": "zhihu-daily.plugin.js",
       "sourceUrl": "https://daily.zhihu.com",
       "categories": [
-        "news",
-        "daily"
+        "news"
       ],
-      "lang": "zh",
-      "nsfw": 0,
-      "capabilities": [
-        "list",
-        "detail"
+      "tags": [
+        "daily",
+        "zhihu"
       ],
-      "minRuntimeVersion": "1.0.0"
+      "languages": [
+        "zh-Hans"
+      ],
+      "contentRating": "safe",
+      "minRuntimeVersion": "1.7.0",
+      "iconUrl": "https://www.google.com/s2/favicons?domain=zhihu.com&sz=256"
     }
   ]
 }
